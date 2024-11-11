@@ -1,19 +1,14 @@
 from flask import Blueprint, jsonify, request
-from .cache import cache_data, get_cached_data
+from .service import get_currency_price_from_api
 
 api_bp = Blueprint('api', __name__)
 
 @api_bp.route('/currency', methods=['GET'])
 def get_currency_price():
     currency = request.args.get('currency', 'BTC')
-    cache_key = f"currency_{currency}"
-
-    # Verifica se o valor está no cache
-    cached_price = get_cached_data(cache_key)
-    if cached_price:
-        return jsonify({"currency": currency, "price": cached_price, "cached": True})
-
-    # Aqui, simula-se a chamada para obter o preço (substitua pela chamada real)
-    price = 50000  # Exemplo de preço estático
-    cache_data(cache_key, price)
-    return jsonify({"currency": currency, "price": price, "cached": False})
+    result = get_currency(currency)
+    
+    if "error" in result:
+        return jsonify(result), 500
+    
+    return jsonify({"currency": currency, "price": result["price"], "cached": result["cached"]})
